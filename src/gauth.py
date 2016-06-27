@@ -58,11 +58,17 @@ def get_section_token(config, section):
         key = hexkey.decode('hex')
 
     if secret:
-        secret = secret.replace(' ', '')
-        secret = secret.ljust(int(math.ceil(len(secret) / 16.0) * 16), '=')
-        key = base64.b32decode(secret, casefold=True)
+        key = byte_secret(secret)
 
     return str(get_totp_token(key)).zfill(6)
+
+
+def byte_secret(secret):
+    secret = secret.replace(' ', '')
+    missing_padding = len(secret) % 8
+    if missing_padding != 0:
+        secret += '=' * (8 - missing_padding)
+    return base64.b32decode(secret, casefold=True)
 
 
 def get_time_remaining():
@@ -71,9 +77,7 @@ def get_time_remaining():
 
 def is_secret_valid(secret):
     try:
-        secret = secret.replace(' ', '')
-        secret = secret.ljust(int(math.ceil(len(secret) / 16.0) * 16), '=')
-        key = base64.b32decode(secret, casefold=True)
+        key = byte_secret(secret)
         get_totp_token(key)
     except:
         return False
